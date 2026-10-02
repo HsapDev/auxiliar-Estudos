@@ -1,0 +1,9 @@
+{
+    "pasta_entrada":"C:\\Users\\ap44\\Downloads\\estudos",
+    "pasta_destino":"C:\\Users\\ap44\\Documentos\\estudos",
+    "palavras_chave":{
+        "Matematica_Discreta":["relacoes discretas","provas matematicas","preposicoes logicas"],
+        "Programacao":["java","python","banco de dados","fundamentos"],
+        "matematica":["algebra","geometria plana","geometria","funcoes","equacaoes","matematica"]
+    }
+}

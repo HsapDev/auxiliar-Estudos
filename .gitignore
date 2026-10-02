@@ -1,0 +1,12 @@
+# Arquivos de bytecode do Python
+__pycache__/
+*.pyc
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Configurações de IDEs
+.vscode/
+.idea/
