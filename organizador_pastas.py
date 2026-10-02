@@ -2,79 +2,81 @@ import json
 from pathlib import Path
 import shutil
 
-# Abre o json e pega as infos
-with open("materias.json", mode="r", encoding="utf-8") as file:
-    configuracoes = json.load(file)
 
-pasta_entrada = configuracoes["pasta_entrada"]
-pasta_destino = configuracoes["pasta_destino"]
-palavras_chave = configuracoes["palavras_chave"]
+def executar_organizacao(caminho_config:str="materias.json"):
+    # Abre o json e pega as infos
+    with open("materias.json", mode="r", encoding="utf-8") as file:
+        configuracoes = json.load(file)
 
-# Verifica se o diretorio de entrada existe
-diretorio_entrada = Path(pasta_entrada)
+    pasta_entrada = configuracoes["pasta_entrada"]
+    pasta_destino = configuracoes["pasta_destino"]
+    palavras_chave = configuracoes["palavras_chave"]
 
-if not diretorio_entrada.exists():
-    print(f"ERRO: A pasta {pasta_entrada} nao foi encontrada!")
-else:
-    arquivos_encontrados = []
-    for item in diretorio_entrada.iterdir():
-        if item.is_file():
-            arquivos_encontrados.append(item)
+    # Verifica se o diretorio de entrada existe
+    diretorio_entrada = Path(pasta_entrada)
 
-    print(f"Total de arquivos encontrados: {len(arquivos_encontrados)}")
-    for arq in arquivos_encontrados:
-        print(f"-> encontrado: {arq.name}")
+    if not diretorio_entrada.exists():
+        print(f"ERRO: A pasta {pasta_entrada} nao foi encontrada!")
+    else:
+        arquivos_encontrados = []
+        for item in diretorio_entrada.iterdir():
+            if item.is_file():
+                arquivos_encontrados.append(item)
 
-    # Le o conteudo dos arquivos
-    conteudo_arquivo = {}
+        print(f"Total de arquivos encontrados: {len(arquivos_encontrados)}")
+        for arq in arquivos_encontrados:
+            print(f"-> encontrado: {arq.name}")
 
-    for arquivo in arquivos_encontrados:
-        try:
-            texto = arquivo.read_text(encoding='utf-8').lower()
-            # Unimos o NOME com o CONTEUDO para ajudar na busca por palavras-chave
-            texto_completo = f"{arquivo.name.lower()} {texto}"
-            conteudo_arquivo[arquivo] = texto_completo
-            print(f"Lido com sucesso: {arquivo.name}")
+        # Le o conteudo dos arquivos
+        conteudo_arquivo = {}
 
-        except UnicodeDecodeError:
-            print(f"Aviso: nao foi possivel ler {arquivo.name} como texto (formato incompativel)")
-        except Exception as e:
-            print(f"ERRO ao ler {arquivo.name}: {e}")
+        for arquivo in arquivos_encontrados:
+            try:
+                texto = arquivo.read_text(encoding='utf-8').lower()
+                # Unimos o NOME com o CONTEUDO para ajudar na busca por palavras-chave
+                texto_completo = f"{arquivo.name.lower()} {texto}"
+                conteudo_arquivo[arquivo] = texto_completo
+                print(f"Lido com sucesso: {arquivo.name}")
 
-    print(f"\nTotal de arquivos lidos com sucesso: {len(conteudo_arquivo)}")
+            except UnicodeDecodeError:
+                print(f"Aviso: nao foi possivel ler {arquivo.name} como texto (formato incompativel)")
+            except Exception as e:
+                print(f"ERRO ao ler {arquivo.name}: {e}")
 
-    # Classifica por palavras-chave
-    classificacao_arquivos = {}     
+        print(f"\nTotal de arquivos lidos com sucesso: {len(conteudo_arquivo)}")
 
-    for arquivo, texto in conteudo_arquivo.items():
-        materia_vencedora = "Sem_Categoria"
-        maior_pontuacao = 0
+        # Classifica por palavras-chave
+        classificacao_arquivos = {}     
 
-        for materia, palavras in palavras_chave.items():
-            pontos_materia = 0
+        for arquivo, texto in conteudo_arquivo.items():
+            materia_vencedora = "Sem_Categoria"
+            maior_pontuacao = 0
 
-            for palavra in palavras:
-                pontos_materia += texto.count(palavra.lower())
+            for materia, palavras in palavras_chave.items():
+                pontos_materia = 0
 
-            if pontos_materia > maior_pontuacao:
-                maior_pontuacao = pontos_materia
-                materia_vencedora = materia
+                for palavra in palavras:
+                    pontos_materia += texto.count(palavra.lower())
 
-        classificacao_arquivos[arquivo] = materia_vencedora
-        print(f"Arquivo {arquivo.name} -> classificado como: {materia_vencedora} (Matches: {maior_pontuacao})")
+                if pontos_materia > maior_pontuacao:
+                    maior_pontuacao = pontos_materia
+                    materia_vencedora = materia
 
-    # Movel os arquivos para as pastas finais
-    diretorio_destino_base = Path(pasta_destino)
+            classificacao_arquivos[arquivo] = materia_vencedora
+            print(f"Arquivo {arquivo.name} -> classificado como: {materia_vencedora} (Matches: {maior_pontuacao})")
 
-    print("\n--- Iniciando Movimentacao ---")
+        # Movel os arquivos para as pastas finais
+        diretorio_destino_base = Path(pasta_destino)
 
-    for arquivo, materia in classificacao_arquivos.items():
-        pasta_destino_materia = diretorio_destino_base / materia
-        pasta_destino_materia.mkdir(parents=True, exist_ok=True)
+        print("\n--- Iniciando Movimentacao ---")
 
-        caminho_final = pasta_destino_materia / arquivo.name
+        for arquivo, materia in classificacao_arquivos.items():
+            pasta_destino_materia = diretorio_destino_base / materia
+            pasta_destino_materia.mkdir(parents=True, exist_ok=True)
 
-        shutil.move(arquivo, caminho_final)
-        print(f"Movido: {arquivo.name} -> {materia}/")
+            caminho_final = pasta_destino_materia / arquivo.name
 
-    print("\nOrganizacao concluida com sucesso!")
+            shutil.move(arquivo, caminho_final)
+            print(f"Movido: {arquivo.name} -> {materia}/")
+
+        print("\nOrganizacao concluida com sucesso!")

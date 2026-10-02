@@ -2,7 +2,7 @@
     {
         "id": 1,
         "materia": "Matematica_discreta",
-        "intervalo_dias": 10,
+        "intervalo_dias": 20,
         "topico": "preposicoes logicas",
         "atividade": "p1",
         "ultima_revisao": "2026-10-02"
@@ -21,6 +21,6 @@
         "intervalo_dias": 5,
         "topico": "provas matematicas",
         "atividade": "p3",
-        "ultima_revisao": "2026-10-15"
+        "ultima_revisao": "2026-10-02"
     }
 ]
