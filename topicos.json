@@ -2,10 +2,10 @@
     {
         "id": 1,
         "materia": "Matematica_discreta",
-        "intervalo_dias": 20,
+        "intervalo_dias": 20480,
         "topico": "preposicoes logicas",
         "atividade": "p1",
-        "ultima_revisao": "2026-10-02"
+        "ultima_revisao": "2026-10-03"
     },
     {
         "id": 2,
