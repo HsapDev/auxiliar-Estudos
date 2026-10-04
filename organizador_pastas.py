@@ -1,82 +1,140 @@
 import json
+import os
 from pathlib import Path
 import shutil
 
+from logger import log_info, log_sucesso, log_aviso, log_erro
 
-def executar_organizacao(caminho_config:str="materias.json"):
+
+def resolver_caminho(caminho_str: str, tipo_padrao: str = "downloads") -> Path:
+    """
+    Resolve caminhos relativos ao usuário (~/Downloads, ~/Documents),
+    variáveis de ambiente (%USERPROFILE%) e caminhos legados de outras máquinas.
+    """
+    home = Path.home()
+    if not caminho_str or "ap44" in caminho_str:
+        if tipo_padrao == "downloads":
+            return home / "Downloads" / "estudos"
+        else:
+            docs = home / "Documents"
+            if not docs.exists() and (home / "Documentos").exists():
+                docs = home / "Documentos"
+            return docs / "estudos"
+
+    caminho_expandido = os.path.expandvars(os.path.expanduser(caminho_str))
+    p = Path(caminho_expandido)
+    if "Documents" in p.parts and not p.exists():
+        p_alt = Path(str(p).replace("Documents", "Documentos"))
+        if p_alt.parent.exists():
+            return p_alt
+    return p
+
+
+def executar_organizacao(caminho_config: str = "materias.json", arquivos_extras: list = None):
     # Abre o json e pega as infos
-    with open("materias.json", mode="r", encoding="utf-8") as file:
+    with open(caminho_config, mode="r", encoding="utf-8") as file:
         configuracoes = json.load(file)
 
-    pasta_entrada = configuracoes["pasta_entrada"]
-    pasta_destino = configuracoes["pasta_destino"]
-    palavras_chave = configuracoes["palavras_chave"]
+    pasta_entrada = configuracoes.get("pasta_entrada", "~/Downloads/estudos")
+    pasta_destino = configuracoes.get("pasta_destino", "~/Documents/estudos")
+    palavras_chave = configuracoes.get("palavras_chave", {})
 
-    # Verifica se o diretorio de entrada existe
-    diretorio_entrada = Path(pasta_entrada)
+    # Resolve os caminhos universais no computador atual
+    diretorio_entrada = resolver_caminho(pasta_entrada, "downloads")
+    diretorio_destino_base = resolver_caminho(pasta_destino, "documents")
 
-    if not diretorio_entrada.exists():
-        print(f"ERRO: A pasta {pasta_entrada} nao foi encontrada!")
-    else:
-        arquivos_encontrados = []
+    # Garante que os diretórios existam
+    diretorio_entrada.mkdir(parents=True, exist_ok=True)
+    diretorio_destino_base.mkdir(parents=True, exist_ok=True)
+
+    arquivos_encontrados = []
+    if diretorio_entrada.exists():
         for item in diretorio_entrada.iterdir():
             if item.is_file():
                 arquivos_encontrados.append(item)
 
-        print(f"Total de arquivos encontrados: {len(arquivos_encontrados)}")
-        for arq in arquivos_encontrados:
-            print(f"-> encontrado: {arq.name}")
+    # Adiciona arquivos recebidos diretamente (ex: via Drag & Drop)
+    if arquivos_extras:
+        for extra in arquivos_extras:
+            p_extra = Path(extra)
+            if p_extra.is_file() and p_extra not in arquivos_encontrados:
+                arquivos_encontrados.append(p_extra)
+            elif p_extra.is_dir():
+                for sub in p_extra.iterdir():
+                    if sub.is_file() and sub not in arquivos_encontrados:
+                        arquivos_encontrados.append(sub)
 
-        # Le o conteudo dos arquivos
-        conteudo_arquivo = {}
+    log_info(f"Escaneando arquivos... Encontrados: {len(arquivos_encontrados)}", "Organizador")
+    for arq in arquivos_encontrados:
+        log_info(f"Arquivo identificado: {arq.name}", "Organizador")
 
-        for arquivo in arquivos_encontrados:
-            try:
-                texto = arquivo.read_text(encoding='utf-8').lower()
-                # Unimos o NOME com o CONTEUDO para ajudar na busca por palavras-chave
-                texto_completo = f"{arquivo.name.lower()} {texto}"
-                conteudo_arquivo[arquivo] = texto_completo
-                print(f"Lido com sucesso: {arquivo.name}")
+    if not arquivos_encontrados:
+        log_aviso("Nenhum arquivo encontrado para organizar na pasta de entrada.", "Organizador")
+        return {
+            "pasta_destino": str(diretorio_destino_base),
+            "total_movidos": 0,
+            "classificacao": {}
+        }
 
-            except UnicodeDecodeError:
-                print(f"Aviso: nao foi possivel ler {arquivo.name} como texto (formato incompativel)")
-            except Exception as e:
-                print(f"ERRO ao ler {arquivo.name}: {e}")
+    # Le o conteudo dos arquivos
+    conteudo_arquivo = {}
 
-        print(f"\nTotal de arquivos lidos com sucesso: {len(conteudo_arquivo)}")
+    for arquivo in arquivos_encontrados:
+        try:
+            texto = arquivo.read_text(encoding='utf-8').lower()
+            # Unimos o NOME com o CONTEUDO para ajudar na busca por palavras-chave
+            texto_completo = f"{arquivo.name.lower()} {texto}"
+            conteudo_arquivo[arquivo] = texto_completo
+            log_info(f"Texto lido com sucesso: {arquivo.name}", "Organizador")
 
-        # Classifica por palavras-chave
-        classificacao_arquivos = {}     
+        except UnicodeDecodeError:
+            # Se for PDF, imagem ou binário, usa o próprio nome do arquivo para classificação
+            texto_completo = arquivo.name.lower()
+            conteudo_arquivo[arquivo] = texto_completo
+            log_info(f"Arquivo binário/mídia: usando nome do arquivo para classificação: {arquivo.name}", "Organizador")
+        except Exception as e:
+            log_erro(f"Erro ao ler arquivo {arquivo.name}", "Organizador", exc=e)
 
-        for arquivo, texto in conteudo_arquivo.items():
-            materia_vencedora = "Sem_Categoria"
-            maior_pontuacao = 0
+    # Classifica por palavras-chave
+    classificacao_arquivos = {}     
 
-            for materia, palavras in palavras_chave.items():
-                pontos_materia = 0
+    for arquivo, texto in conteudo_arquivo.items():
+        materia_vencedora = "Sem_Categoria"
+        maior_pontuacao = 0
 
-                for palavra in palavras:
-                    pontos_materia += texto.count(palavra.lower())
+        for materia, palavras in palavras_chave.items():
+            pontos_materia = 0
 
-                if pontos_materia > maior_pontuacao:
-                    maior_pontuacao = pontos_materia
-                    materia_vencedora = materia
+            for palavra in palavras:
+                pontos_materia += texto.count(palavra.lower())
 
-            classificacao_arquivos[arquivo] = materia_vencedora
-            print(f"Arquivo {arquivo.name} -> classificado como: {materia_vencedora} (Matches: {maior_pontuacao})")
+            if pontos_materia > maior_pontuacao:
+                maior_pontuacao = pontos_materia
+                materia_vencedora = materia
 
-        # Movel os arquivos para as pastas finais
-        diretorio_destino_base = Path(pasta_destino)
+        classificacao_arquivos[arquivo] = materia_vencedora
+        if materia_vencedora == "Sem_Categoria":
+            log_aviso(f"'{arquivo.name}' não correspondeu a nenhuma matéria. Movendo para 'Sem_Categoria'.", "Organizador")
+        else:
+            log_sucesso(f"'{arquivo.name}' classificado em '{materia_vencedora}' ({maior_pontuacao} pontos).", "Organizador")
 
-        print("\n--- Iniciando Movimentacao ---")
+    # Mover os arquivos para as pastas finais
+    log_info("Iniciando movimentação de arquivos para pastas de destino...", "Organizador")
 
-        for arquivo, materia in classificacao_arquivos.items():
+    for arquivo, materia in classificacao_arquivos.items():
+        try:
             pasta_destino_materia = diretorio_destino_base / materia
             pasta_destino_materia.mkdir(parents=True, exist_ok=True)
 
             caminho_final = pasta_destino_materia / arquivo.name
-
             shutil.move(arquivo, caminho_final)
-            print(f"Movido: {arquivo.name} -> {materia}/")
+            log_sucesso(f"Movido com sucesso: {arquivo.name} -> {materia}/", "Organizador")
+        except Exception as e:
+            log_erro(f"Falha ao mover {arquivo.name} para {materia}/", "Organizador", exc=e)
 
-        print("\nOrganizacao concluida com sucesso!")
+    log_sucesso(f"Organização finalizada! Total de arquivos organizados: {len(classificacao_arquivos)}", "Organizador")
+    return {
+        "pasta_destino": str(diretorio_destino_base),
+        "total_movidos": len(classificacao_arquivos),
+        "classificacao": {str(arq.name): mat for arq, mat in classificacao_arquivos.items()}
+    }

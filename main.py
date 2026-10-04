@@ -7,6 +7,8 @@ from organizador_pastas import (executar_organizacao)
 from organizador_estudos import(
     mapear_provas_proximas,calcular_fila_prioridade,registrar_revisao)
 
+from logger import log_info, log_sucesso, log_aviso, log_erro
+
 
 def carregar_json(caminho_arquivo:str):
     path = Path(caminho_arquivo)

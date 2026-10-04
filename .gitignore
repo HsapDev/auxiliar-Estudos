@@ -10,3 +10,11 @@ env/
 # Configurações de IDEs
 .vscode/
 .idea/
+
+# Logs
+*.log
+
+# Credenciais e variáveis de ambiente
+.env
+*.env
+
