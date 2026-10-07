@@ -1,6 +1,7 @@
-import os 
+import os
 import json
 import mimetypes
+import time
 from PyQt6.QtCore import QThread, pyqtSignal
 from google import genai
 from google.genai import types
@@ -13,15 +14,23 @@ class FabriqueiroWorker(QThread):
     erro = pyqtSignal(str)
     progresso = pyqtSignal(str)
 
-    def __init__(self, caminhos_midias: list, api_key: str):
+    def __init__(
+        self,
+        caminhos_midias: list,
+        api_key: str,
+        tipo_foco: str = "padrao",
+        instrucoes_customizadas: str = ""
+    ):
         super().__init__()
         self.caminhos_midias = caminhos_midias
         self.api_key = api_key
+        self.tipo_foco = tipo_foco
+        self.instrucoes_customizadas = instrucoes_customizadas.strip()
 
     def run(self):
         try:
             total_arqs = len(self.caminhos_midias)
-            log_info(f"Iniciando Fabriqueiro para {total_arqs} arquivo(s)...", "Fabriqueiro")
+            log_info(f"Iniciando Fabriqueiro para {total_arqs} arquivo(s) (Foco: '{self.tipo_foco}')...", "Fabriqueiro")
             client = genai.Client(api_key=self.api_key)
 
             arquivos_uploaded = []
@@ -31,7 +40,7 @@ class FabriqueiroWorker(QThread):
                 nome_arq = os.path.basename(caminho_limpo)
                 self.progresso.emit(f"Enviando arquivo {idx}/{total_arqs}: {nome_arq}...")
                 log_info(f"Fazendo upload para API Gemini ({idx}/{total_arqs}): {nome_arq}", "Fabriqueiro")
-                
+
                 # Identifica o MIME type
                 mime_type, _ = mimetypes.guess_type(caminho_limpo)
                 if not mime_type:
@@ -40,8 +49,6 @@ class FabriqueiroWorker(QThread):
                     else:
                         mime_type = "image/jpeg"
 
-                # No SDK google-genai, ao passar o arquivo aberto em 'rb', evita a injeção
-                # de cabeçalhos HTTP com caracteres não-ASCII (que causam o erro 'ascii' codec)
                 with open(caminho_limpo, "rb") as f:
                     arq = client.files.upload(
                         file=f,
@@ -53,36 +60,93 @@ class FabriqueiroWorker(QThread):
                 arquivos_uploaded.append(arq)
                 log_sucesso(f"Upload concluído com sucesso: {nome_arq}", "Fabriqueiro")
 
-            prompt = """
-            Você é um assistente acadêmico especialista. Analise as mídias enviadas (fotos de lousas, resumos ou exercícios) 
-            e extraia o conhecimento em formato JSON estrito conforme o esquema:
-            {
-                "materia": "Nome da matéria",
-                "resumo_big_picture": "Visão geral concisa sobre o conceito",
-                "formulas": [{"nome": "Nome", "formula": "Expressão"}],
-                "alertas_atencao": ["Troca de sinal em álgebra", "Cuidado com simplificação de fração"],
+            # Constrói o bloco de foco do prompt
+            if self.tipo_foco == "lista_exercicios":
+                bloco_foco = """
+                DIRETRIZ PRIORITÁRIA (RESOLUÇÃO DE LISTA DE EXERCÍCIOS):
+                O material enviado consiste em uma LISTA DE EXERCÍCIOS ou tarefas.
+                Sua OBRIGAÇÃO PRINCIPAL é extrair e RESOLVER DETALHADAMENTE CADA UM DOS EXERCÍCIOS presentes nas páginas.
+                - No array 'exercicios_resolvidos', inclua TODOS os exercícios encontrados.
+                - No campo 'enunciado', transcreva o enunciado exato e completo da questão.
+                - No campo 'passos', descreva a resolução matemática/lógica passo a passo com todos os cálculos, fórmulas aplicadas e conclusão clara.
+                NÃO produza apenas um resumo da disciplina: o objetivo primordial é o gabarito e resolução detalhada de cada questão!
+                """
+            elif self.tipo_foco == "teoria_formulas":
+                bloco_foco = """
+                DIRETRIZ PRIORITÁRIA (TEORIA E FÓRMULAS):
+                Foco total no aprofundamento conceitual, definições rigorosas, teoremas e fórmulas fundamentais.
+                Explique cada fórmula no campo 'formulas' detalhando as variáveis.
+                """
+            elif self.tipo_foco == "simulado_provas":
+                bloco_foco = """
+                DIRETRIZ PRIORITÁRIA (PREPARAÇÃO PARA PROVA & PEGADINHAS):
+                Foco em questões desafiadoras de prova e nas pegadinhas clássicas que costumam derrubar estudantes.
+                No campo 'alertas_atencao', aprofunde nos erros mais frequentes e como evitá-los.
+                """
+            else:
+                bloco_foco = """
+                DIRETRIZ PRIORITÁRIA (APOSTILA CONSOLIDADA COMPLETA):
+                Crie um material completo equilibrando resumo da matéria, fórmulas fundamentais, alertas de pegadinhas e exercícios resolvidos representativos.
+                """
+
+            # Se o usuário informou instruções customizadas, adiciona com máxima precedência
+            bloco_custom = ""
+            if self.instrucoes_customizadas:
+                bloco_custom = f"""
+                INSTRUÇÕES ESPECÍFICAS DO ESTUDANTE (SIGA COM PRIORIDADE):
+                {self.instrucoes_customizadas}
+                Adapte toda a resposta para atender estritamente a estas solicitações!
+                """
+                log_info(f"Instruções customizadas aplicadas ao prompt: {self.instrucoes_customizadas[:80]}...", "Fabriqueiro")
+
+            prompt = f"""
+            Você é um assistente acadêmico especialista em compilar materiais didáticos de alto nível.
+            Analise as mídias enviadas (documentos, apostilas, fotos de lousas ou listas de exercícios)
+            e extraia o conhecimento estruturado em formato JSON rigoroso.
+
+            {bloco_foco}
+
+            {bloco_custom}
+
+            ESQUEMA JSON OBRIGATÓRIO:
+            {{
+                "materia": "Nome exato da matéria ou disciplina",
+                "resumo_big_picture": "Visão geral concisa sobre o conceito e contexto",
+                "formulas": [
+                    {{"nome": "Nome do Teorema/Fórmula", "formula": "Expressão matemática"}}
+                ],
+                "alertas_atencao": [
+                    "Alerta sobre pegadinha frequente",
+                    "Cuidado com troca de sinal ou definição"
+                ],
                 "exercicios_resolvidos": [
-                    {
-                        "enunciado": "Descrição do problema",
-                        "passos": ["Passo 1...", "Passo 2..."]
-                    }
+                    {{
+                        "enunciado": "Enunciado completo da questão",
+                        "passos": [
+                            "Passo 1: Identificar as variáveis...",
+                            "Passo 2: Aplicar a fórmula...",
+                            "Passo 3: Conclusão e resultado..."
+                        ]
+                    }}
                 ]
-            }
+            }}
+
             Responda SOMENTE o JSON puro, sem blocos markdown adicionais.
             """
 
             conteudo = arquivos_uploaded + [prompt]
 
-            # Modelos GA disponíveis caso o principal enfrente alta demanda (503)
+            # Modelos rápidos e estáveis que evitam erros 503 e reduzem tempo de espera
             modelos_para_tentar = [
-                "gemini-3.8-flash",
+                "gemini-2.5-flash",
                 "gemini-3.5-flash-lite",
+                "gemini-3.5-flash",
+                "gemini-3.8-flash"
             ]
 
             response = None
             ultimo_erro = None
 
-            import time
             for mod in modelos_para_tentar:
                 self.progresso.emit(f"Analisando conteúdo com {mod}...")
                 log_info(f"Enviando requisição de geração para o modelo {mod}...", "Fabriqueiro")
@@ -103,10 +167,10 @@ class FabriqueiroWorker(QThread):
                         msg_erro = str(e).lower()
                         log_aviso(f"Tentativa {tentativa+1} no modelo {mod} falhou: {e}", "Fabriqueiro")
                         if "503" in msg_erro or "unavailable" in msg_erro or "high demand" in msg_erro or "resource_exhausted" in msg_erro:
-                            self.progresso.emit(f"Servidor ocupado. Aguardando para tentar novamente...")
-                            time.sleep(3)
+                            self.progresso.emit(f"Servidor ocupado em {mod}. Tentando alternativa...")
+                            time.sleep(2)
                             continue
-                        raise e
+                        break
 
                 if response and response.text:
                     break
@@ -143,8 +207,8 @@ class FabriqueiroWorker(QThread):
             caminho_config = "materias.json"
             if os.path.exists(caminho_config):
                 try:
-                    with open(caminho_config, "r", encoding="utf-8") as f_cfg:
-                        cfg = json.load(f_cfg)
+                    with open(caminho_config, "r", encoding="utf-8") as f:
+                        cfg = json.load(f)
                         pasta_destino_str = cfg.get("pasta_destino", "~/Documents/estudos")
                         pasta_destino_base = resolver_caminho(pasta_destino_str, "documents")
                         materias_cadastradas = list(cfg.get("palavras_chave", {}).keys())
@@ -153,7 +217,7 @@ class FabriqueiroWorker(QThread):
 
             # Encontra ou cria a pasta da matéria correspondente
             materia_ia = dados_json.get("materia", "Geral")
-            
+
             def norm_comp(txt: str) -> str:
                 nfd = unicodedata.normalize('NFD', txt)
                 sem = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
@@ -169,7 +233,6 @@ class FabriqueiroWorker(QThread):
                     break
 
             if not pasta_materia_nome:
-                # Cria nome seguro a partir do nome dado pela IA
                 nome_limpo = re.sub(r'[\\/*?:"<>|]', '', materia_ia).strip().replace(" ", "_")
                 pasta_materia_nome = nome_limpo or "Geral"
 
@@ -183,7 +246,7 @@ class FabriqueiroWorker(QThread):
             caminho_pdf = str(diretorio_materia / f"Apostila_{pasta_materia_nome}.pdf")
             gerar_pdf_apostila(caminho_json, caminho_pdf)
             log_sucesso(f"Apostila PDF gerada com sucesso: {caminho_pdf}", "Fabriqueiro")
-            log_sucesso(f"Base de conhecimento JSON salva: {caminho_json}", "Fabriqueiro")
+            log_sucesso(f"Base de conhecimento JSON salva ({len(dados_json.get('exercicios_resolvidos', []))} exercícios): {caminho_json}", "Fabriqueiro")
 
             # Cópia local de conveniência
             try:

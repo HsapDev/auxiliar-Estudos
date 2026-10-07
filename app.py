@@ -6,12 +6,12 @@ from PyQt6.QtGui import QIcon, QAction
 
 # Logger Central
 from logger import log_info, log_sucesso, log_aviso, log_erro
+from ui.theme import aplicar_estilo_app
 
 # Importa as abas criadas
 from ui.tab_home import TabHome
 from ui.tab_arena import TabArena
 from ui.tab_guru import TabGuru
-from ui.tab_dropzone import TabDropZone
 from ui.tab_fabriqueiro import TabFabriqueiro
 from ui.tab_config import TabConfig
 from ui.tab_logs import TabLogs
@@ -19,8 +19,9 @@ from ui.tab_logs import TabLogs
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gerenciador de Estudos & Arquivos")
-        self.resize(980, 720)
+        self.setWindowTitle("🎓 Auxiliar de Estudos & Simulados")
+        self.resize(1120, 780)
+        self.setMinimumSize(960, 680)
         log_info("Inicializando interface gráfica principal...", "App")
 
         # Configura as Abas Principais
@@ -28,7 +29,6 @@ class MainWindow(QMainWindow):
         self.tab_home = TabHome()
         self.tab_arena = TabArena()
         self.tab_guru = TabGuru()
-        self.tab_dropzone = TabDropZone()
         self.tab_fabriqueiro = TabFabriqueiro()
         self.tab_config = TabConfig()
         self.tab_logs = TabLogs()
@@ -36,8 +36,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab_home, "Fila de Estudos")
         self.tabs.addTab(self.tab_arena, "⚔️ Arena (Simulados)")
         self.tabs.addTab(self.tab_guru, "🧙‍♂️ Guru de Estudos")
-        self.tabs.addTab(self.tab_dropzone, "Organizador (Drag & Drop)")
-        self.tabs.addTab(self.tab_fabriqueiro, "O fabriqueiro (IA)")
+        self.tabs.addTab(self.tab_fabriqueiro, "🏭 O Fabriqueiro (Prompts)")
         self.tabs.addTab(self.tab_config, "Configurações")
         self.tabs.addTab(self.tab_logs, "📋 Central de Logs")
 
@@ -101,6 +100,9 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
+    # Aplica o tema visual moderno em toda a aplicação
+    aplicar_estilo_app(app)
+
     # Garante que o app não encerre se a janela for fechada (apenas se chamar quit)
     app.setQuitOnLastWindowClosed(False)
 

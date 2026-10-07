@@ -1,7 +1,12 @@
 [
-    {"materia":"Matematica_discreta","atividade":"p1","data":"2026-10-10"},
-
-    {"materia":"Matematica_discreta","atividade":"p2","data":"2026-10-31"},
-    
-    {"materia":"Matematica_discreta","atividade":"p3","data":"2026-12-23"}
+    {
+        "materia": "Analise de Dados",
+        "atividade": "Revisão Teórica",
+        "data": "2026-10-09"
+    },
+    {
+        "materia": "matematica",
+        "atividade": "Prova / Avaliação",
+        "data": "2028-01-07"
+    }
 ]

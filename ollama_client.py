@@ -1,42 +1,16 @@
 import json
 import os
-import urllib.request
-import urllib.error
 from pathlib import Path
 from PyQt6.QtCore import QThread, pyqtSignal
 from organizador_pastas import resolver_caminho
 from logger import log_info, log_sucesso, log_aviso, log_erro
-
-
-OLLAMA_BASE_URL = "http://localhost:11434"
-
-
-def verificar_ollama_online(timeout: float = 2.0) -> bool:
-    """Verifica se o servidor do Ollama está rodando localmente."""
-    try:
-        req = urllib.request.Request(f"{OLLAMA_BASE_URL}/api/tags")
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.status == 200
-    except Exception:
-        return False
-
-
-def listar_modelos_locais(timeout: float = 3.0) -> list[str]:
-    """Retorna a lista de modelos baixados no Ollama."""
-    try:
-        req = urllib.request.Request(f"{OLLAMA_BASE_URL}/api/tags")
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            dados = json.loads(resp.read().decode("utf-8"))
-            modelos = [m.get("name") for m in dados.get("models", [])]
-            return modelos
-    except Exception:
-        return []
+from credenciais import carregar_gemini_api_key
 
 
 def carregar_conhecimento_materia(materia: str) -> dict:
     """
     Localiza o arquivo de conhecimento compilado da matéria.
-    Procura tanto na raiz quanto na pasta de estudos configurada.
+    Procura tanto na pasta de estudos quanto na raiz.
     """
     candidatos = [
         Path(f"conhecimento_{materia}.json"),
@@ -44,12 +18,21 @@ def carregar_conhecimento_materia(materia: str) -> dict:
     ]
 
     try:
+        pasta_destino = Path.home() / "Documents" / "estudos"
         if os.path.exists("materias.json"):
             with open("materias.json", "r", encoding="utf-8") as f:
                 cfg = json.load(f)
                 pasta_destino = resolver_caminho(cfg.get("pasta_destino", "~/Documents/estudos"), "documents")
-                candidatos.insert(0, pasta_destino / materia / f"conhecimento_{materia}.json")
-                candidatos.insert(1, pasta_destino / materia / "conhecimento_materia.json")
+
+        candidatos.insert(0, pasta_destino / materia / f"conhecimento_{materia}.json")
+        candidatos.insert(1, pasta_destino / materia / "conhecimento_materia.json")
+
+        # Busca por aproximação de nome de pasta
+        if pasta_destino.exists():
+            for sub in pasta_destino.iterdir():
+                if sub.is_dir() and (materia.lower() in sub.name.lower() or sub.name.lower() in materia.lower()):
+                    candidatos.insert(0, sub / f"conhecimento_{sub.name}.json")
+                    candidatos.insert(1, sub / "conhecimento_materia.json")
     except Exception:
         pass
 
@@ -64,6 +47,85 @@ def carregar_conhecimento_materia(materia: str) -> dict:
     return {}
 
 
+def carregar_todas_questoes_arena(materias_filtro: list[str] = None) -> list[dict]:
+    """
+    Varre a pasta de estudos e a raiz em busca de todos os arquivos de conhecimento
+    e consolida os exercícios de todas as matérias encontradas.
+    """
+    questoes = []
+    arquivos_vistos = set()
+
+    pasta_destino = Path.home() / "Documents" / "estudos"
+    if os.path.exists("materias.json"):
+        try:
+            with open("materias.json", "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                pasta_destino = resolver_caminho(cfg.get("pasta_destino", "~/Documents/estudos"), "documents")
+        except Exception:
+            pass
+
+    candidatos = []
+    if pasta_destino.exists():
+        for arq in pasta_destino.glob("**/conhecimento*.json"):
+            candidatos.append(arq)
+
+    for arq in Path(".").glob("conhecimento*.json"):
+        candidatos.append(arq.resolve())
+
+    for arq in candidatos:
+        caminho_real = arq.resolve()
+        if caminho_real in arquivos_vistos or not caminho_real.exists():
+            continue
+        arquivos_vistos.add(caminho_real)
+
+        try:
+            with open(caminho_real, "r", encoding="utf-8") as f:
+                dados = json.load(f)
+                materia_nome = dados.get("materia", "").strip() or arq.parent.name
+                exercicios = dados.get("exercicios_resolvidos", [])
+
+                if materias_filtro:
+                    # Se tiver filtro, verifica se a matéria bate com alguma selecionada
+                    match = any(
+                        m.lower() in materia_nome.lower() or materia_nome.lower() in m.lower()
+                        for m in materias_filtro
+                    )
+                    if not match:
+                        continue
+
+                for ex in exercicios:
+                    item = dict(ex)
+                    item["materia"] = materia_nome
+                    questoes.append(item)
+        except Exception as e:
+            log_aviso(f"Não foi possível ler {caminho_real}: {e}", "Arena")
+
+    return questoes
+
+
+def listar_materias_com_conhecimento() -> list[str]:
+    """Retorna a lista de todas as matérias cadastradas ou que possuem apostila/conhecimento."""
+    materias = set()
+
+    if os.path.exists("materias.json"):
+        try:
+            with open("materias.json", "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                for k in cfg.get("palavras_chave", {}).keys():
+                    if k.strip():
+                        materias.add(k.strip())
+        except Exception:
+            pass
+
+    pasta_destino = Path.home() / "Documents" / "estudos"
+    if pasta_destino.exists():
+        for sub in pasta_destino.iterdir():
+            if sub.is_dir() and not sub.name.startswith("."):
+                materias.add(sub.name)
+
+    return sorted(list(materias))
+
+
 def carregar_erros_recentes(materia: str = None, limite: int = 5) -> list[dict]:
     """Carrega os erros mais recentes cometidos na Arena."""
     caminho = Path("erros_arena.json")
@@ -73,7 +135,10 @@ def carregar_erros_recentes(materia: str = None, limite: int = 5) -> list[dict]:
         with open(caminho, "r", encoding="utf-8") as f:
             todos_erros = json.load(f)
         if materia:
-            todos_erros = [e for e in todos_erros if e.get("materia", "").lower() == materia.lower()]
+            todos_erros = [
+                e for e in todos_erros 
+                if e.get("materia", "").lower() in materia.lower() or materia.lower() in e.get("materia", "").lower()
+            ]
         return todos_erros[-limite:]
     except Exception:
         return []
@@ -187,158 +252,114 @@ HISTÓRICO DO ALUNO:
 INSTRUÇÕES DO GURU:
 - Responda em português claro, direto ao ponto e incentivador.
 - Quando o aluno fizer uma pergunta ou demonstrar dúvida, use a base de conhecimento compilada e dê ênfase nas áreas em que ele costuma tropeçar (erros recentes).
-- Se envolver contas, mostre o passo a passo alertando sobre pegadinhas e trocas de sinal.
+- Se envolver contas ou raciocínio lógico, mostre o passo a passo alertando sobre pegadinhas e trocas de sinal.
 """
     return system_prompt
 
 
 class GuruChatWorker(QThread):
+    """Worker que comunica com a API Google Gemini com suporte a streaming contínuo."""
     resposta_parcial = pyqtSignal(str)
     resposta_completa = pyqtSignal(str)
     erro = pyqtSignal(str)
 
     def __init__(self, modelo: str, materia: str, historico: list, pergunta: str, api_key_gemini: str = ""):
         super().__init__()
-        self.modelo = modelo
+        self.modelo = modelo or "gemini-2.5-flash"
         self.materia = materia
         self.historico = historico  # Lista de {"role": "user"|"assistant", "content": "..."}
         self.pergunta = pergunta
-        self.api_key_gemini = api_key_gemini
+        self.api_key_gemini = api_key_gemini or carregar_gemini_api_key()
 
     def run(self):
+        if not self.api_key_gemini:
+            self.erro.emit("Chave da API Gemini não configurada. Configure sua chave na aba Configurações.")
+            return
+
         system_prompt = construir_system_prompt_guru(self.materia)
-
-        # Se o modelo selecionado for Gemini ou se o Ollama estiver offline e tiver chave configurada
-        is_gemini = "gemini" in self.modelo.lower()
-        ollama_online = verificar_ollama_online(timeout=1.0)
-        log_info(f"Guru ativado para matéria '{self.materia}' (Ollama online: {ollama_online}, Modelo: {self.modelo})", "Guru")
-
-        if is_gemini or (not ollama_online and self.api_key_gemini):
-            try:
-                log_info("Utilizando modelo Gemini Flash em nuvem para responder à dúvida...", "Guru")
-                from google import genai
-                client = genai.Client(api_key=self.api_key_gemini)
-                prompt_completo = f"{system_prompt}\n\nDÚVIDA DO ESTUDANTE: {self.pergunta}"
-                
-                # Tenta modelo leve
-                response = client.models.generate_content(
-                    model="gemini-3.5-flash-lite",
-                    contents=prompt_completo
-                )
-                log_sucesso("Resposta gerada com sucesso via Gemini Flash Nuvem!", "Guru")
-                self.resposta_completa.emit(response.text)
-                return
-            except Exception as e:
-                log_erro("Falha na geração via Gemini Nuvem", "Guru", exc=e)
-                if not ollama_online:
-                    self.erro.emit(f"Ollama local está offline e houve erro no fallback da Gemini: {e}")
-                    return
+        log_info(f"Guru ativado para matéria '{self.materia}' via Gemini Cloud (Modelo: {self.modelo})", "Guru")
 
         try:
-            log_info(f"Enviando consulta ao Ollama local ({self.modelo})...", "Guru")
-            mensagens = [{"role": "system", "content": system_prompt}]
-            # Adiciona histórico recente da conversa
-            for msg in self.historico[-10:]:
-                mensagens.append(msg)
+            from google import genai
+            from google.genai import types
 
-            # Adiciona a pergunta atual
-            mensagens.append({"role": "user", "content": self.pergunta})
+            client = genai.Client(api_key=self.api_key_gemini)
 
-            payload = {
-                "model": self.modelo,
-                "messages": mensagens,
-                "stream": True,
-                "options": {
-                    "num_gpu": 0,    # Força execução na CPU, evitando crash do driver da Intel Iris Xe (que só tem 1GB)
-                    "num_ctx": 2048,  # Reduz a alocação de memória RAM para KV cache de 8k para 2k
-                    "num_thread": 4   # Limita uso de CPU para manter o Windows 100% responsivo
-                }
-            }
+            # Constrói o histórico de mensagens formatado
+            mensagens_prompt = f"{system_prompt}\n\n--- HISTÓRICO DA CONVERSA RECENTE ---"
+            for msg in self.historico[-6:]:
+                papel = "Aluno" if msg.get("role") == "user" else "Guru"
+                mensagens_prompt += f"\n{papel}: {msg.get('content', '')}"
 
-            req = urllib.request.Request(
-                f"{OLLAMA_BASE_URL}/api/chat",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"}
-            )
+            mensagens_prompt += f"\n\n--- NOVA DÚVIDA DO ESTUDANTE ---\n{self.pergunta}"
 
+            # Modelos para tentar caso o selecionado sofra instabilidade temporária (503)
+            modelos_para_tentar = [
+                self.modelo,
+                "gemini-2.5-flash",
+                "gemini-3.5-flash-lite",
+                "gemini-3.5-flash"
+            ]
+            # Remove duplicatas preservando ordem
+            modelos_unicos = []
+            for m in modelos_para_tentar:
+                if m not in modelos_unicos:
+                    modelos_unicos.append(m)
+
+            sucesso = False
             texto_acumulado = ""
-            with urllib.request.urlopen(req, timeout=120) as response:
-                for line in response:
-                    if line:
-                        chunk_json = json.loads(line.decode("utf-8"))
-                        msg_chunk = chunk_json.get("message", {}).get("content", "")
-                        texto_acumulado += msg_chunk
-                        self.resposta_parcial.emit(msg_chunk)
 
-            log_sucesso(f"Resposta concluída com sucesso via Ollama ({self.modelo}).", "Guru")
-            self.resposta_completa.emit(texto_acumulado)
+            for mod in modelos_unicos:
+                try:
+                    log_info(f"Enviando consulta do Guru para o modelo {mod}...", "Guru")
+                    response = client.models.generate_content_stream(
+                        model=mod,
+                        contents=mensagens_prompt
+                    )
 
-        except urllib.error.HTTPError as e:
-            corpo_erro = ""
-            try:
-                corpo_erro = e.read().decode("utf-8", "ignore")
-            except Exception:
-                pass
-            msg_completa = f"{e} - {corpo_erro}"
-            if "bad_alloc" in msg_completa or "exit status 1" in msg_completa:
-                diag = (
-                    "⚠️ Erro de Memória RAM (std::bad_alloc):\n\n"
-                    "O modelo escolhido é muito pesado para a memória RAM livre do seu notebook no momento.\n\n"
-                    "💡 Soluções recomendadas:\n"
-                    "1. Use o modelo 'llama3.2:1b' ou 'qwen2.5:1.5b' (muito mais leves e rápidos).\n"
-                    "2. Ou mude o Modelo para 'Gemini Flash (Nuvem)' no topo da tela (é gratuito e não usa a memória RAM do PC).\n"
-                    "3. Feche outros aplicativos ou abas do navegador abertos."
-                )
-                log_erro("Falha de alocação de memória no Ollama (std::bad_alloc)", "Guru", exc=e)
-                self.erro.emit(diag)
-            else:
-                log_erro(f"Erro HTTP do Ollama: {msg_completa}", "Guru", exc=e)
-                self.erro.emit(f"Erro no Ollama: {corpo_erro or e}")
+                    for chunk in response:
+                        if chunk and chunk.text:
+                            texto_acumulado += chunk.text
+                            self.resposta_parcial.emit(chunk.text)
 
-        except urllib.error.URLError as e:
-            msg_erro = f"Não foi possível conectar ao Ollama local em {OLLAMA_BASE_URL}."
-            log_erro(msg_erro, "Guru", exc=e)
-            self.erro.emit(f"{msg_erro}\nVerifique se o serviço 'ollama' está rodando.\nDetalhes: {e}")
+                    if texto_acumulado.strip():
+                        log_sucesso(f"Resposta concluída com sucesso via {mod}!", "Guru")
+                        self.resposta_completa.emit(texto_acumulado)
+                        sucesso = True
+                        break
+
+                except Exception as e:
+                    msg_erro = str(e).lower()
+                    log_aviso(f"Modelo {mod} retornou erro no Guru: {e}", "Guru")
+                    if "503" in msg_erro or "unavailable" in msg_erro or "high demand" in msg_erro:
+                        # Tenta o próximo modelo
+                        continue
+                    else:
+                        raise e
+
+            if not sucesso and not texto_acumulado.strip():
+                raise RuntimeError("Não foi possível obter resposta dos modelos Gemini no momento. Verifique sua conexão ou chave de API.")
+
         except Exception as e:
-            log_erro(f"Erro ao consultar o Guru de Estudos", "Guru", exc=e)
-            self.erro.emit(f"Erro ao consultar o Guru de Estudos: {e}")
+            log_erro("Erro ao consultar o Guru de Estudos via Gemini", "Guru", exc=e)
+            self.erro.emit(f"Erro no Guru de Estudos: {e}")
 
+
+# Stubs para retrocompatibilidade sem Ollama
+def verificar_ollama_online(timeout: float = 1.0) -> bool:
+    return False
+
+def listar_modelos_locais(timeout: float = 1.0) -> list[str]:
+    return []
+
+def iniciar_servico_ollama() -> bool:
+    return False
 
 class OllamaPullWorker(QThread):
     progresso = pyqtSignal(str)
     concluido = pyqtSignal(str)
     erro = pyqtSignal(str)
-
     def __init__(self, modelo: str):
         super().__init__()
-        self.modelo = modelo
-
     def run(self):
-        try:
-            log_info(f"Iniciando download do modelo '{self.modelo}' no Ollama...", "Ollama")
-            self.progresso.emit(f"Iniciando download do modelo {self.modelo} no Ollama...")
-            payload = {"name": self.modelo, "stream": True}
-            req = urllib.request.Request(
-                f"{OLLAMA_BASE_URL}/api/pull",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"}
-            )
-
-            with urllib.request.urlopen(req, timeout=600) as response:
-                for line in response:
-                    if line:
-                        chunk = json.loads(line.decode("utf-8"))
-                        status = chunk.get("status", "")
-                        completed = chunk.get("completed", 0)
-                        total = chunk.get("total", 0)
-                        if total > 0:
-                            pct = int((completed / total) * 100)
-                            self.progresso.emit(f"{status}: {pct}%")
-                        else:
-                            self.progresso.emit(status)
-
-            log_sucesso(f"Download do modelo '{self.modelo}' concluído no Ollama!", "Ollama")
-            self.concluido.emit(self.modelo)
-        except Exception as e:
-            log_erro(f"Erro ao baixar modelo '{self.modelo}'", "Ollama", exc=e)
-            self.erro.emit(str(e))
+        self.erro.emit("Ollama foi desativado em favor do Gemini Cloud.")

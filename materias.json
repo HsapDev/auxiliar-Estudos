@@ -1,28 +1,5 @@
 {
     "pasta_entrada": "~/Downloads/estudos",
     "pasta_destino": "~/Documents/estudos",
-    "palavras_chave": {
-        "Matematica_Discreta": [
-            "relacoes discretas",
-            "provas matematicas",
-            "preposicoes logicas"
-        ],
-        "Programacao": [
-            "java",
-            "python",
-            "banco de dados",
-            "fundamentos"
-        ],
-        "matematica": [
-            "algebra",
-            "geometria plana",
-            "geometria",
-            "funcoes",
-            "equacaoes",
-            "matematica"
-        ],
-        "Circuitos Digitais": [
-            "algebra booleana"
-        ]
-    }
+    "palavras_chave": {}
 }

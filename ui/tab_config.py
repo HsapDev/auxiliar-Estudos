@@ -340,6 +340,8 @@ class TabConfig(QWidget):
                 "intervalo_dias": intervalo,
                 "topico": topico,
                 "atividade": atividade,
+                "dificuldade": "medio",
+                "data_evento": "",
                 "ultima_revisao": ontem_str
             }
 

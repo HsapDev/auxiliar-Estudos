@@ -1,0 +1,383 @@
+[
+    {
+        "id": "MD_1",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "1. Considere o conjunto de disciplinas de um curso com a relação de pré-requisito “⩽”: x ⩽ y se x é pré-requisito de y (incluindo x = y). Essa relação é uma ordem parcial? Ela é total?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Verificar a reflexividade. Como cada disciplina é pré-requisito de si mesma (x = y), x ⩽ x para todo x, logo é reflexiva.",
+            "Passo 2: Verificar a antissimetria. Se x é pré-requisito de y e y é pré-requisito de x, então x = y, logo é antissimétrica.",
+            "Passo 3: Verificar a transitividade. Se x é pré-requisito de y e y é pré-requisito de z, então x é pré-requisito de z, logo é transitiva. Portanto, é uma ordem parcial.",
+            "Passo 4: Verificar se é total. A relação não é total, pois existem disciplinas em áreas diferentes do curso que não possuem relação de pré-requisito entre si (são incomparáveis)."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_2",
+        "materia": "Matemática Discreta II",
+        "topico": "Diagramas de Hasse",
+        "tipo": "dissertativa",
+        "enunciado": "2. Descreva o diagrama de Hasse do conjunto das partes de {1, 2, 3} ordenado por inclusão (⊆).",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Identificar o conjunto P({1, 2, 3}) que possui 8 elementos: ∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}.",
+            "Passo 2: Distribuir os elementos por níveis de cardinalidade. Nível 0: ∅. Nível 1: {1}, {2}, {3}. Nível 2: {1,2}, {1,3}, {2,3}. Nível 3: {1,2,3}.",
+            "Passo 3: Conectar os elementos por arestas subindo de nível para cada subconjunto imediato."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_3",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "3. Dê um exemplo de relação em {1, 2, 3} que seja simétrica e transitiva, mas não reflexiva.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Seja o conjunto A = {1, 2, 3}.",
+            "Passo 2: Considere a relação R = {(1, 1), (1, 2), (2, 1), (2, 2)}.",
+            "Passo 3: Verifique simetria: se (1, 2) ∈ R, então (2, 1) ∈ R (válido).",
+            "Passo 4: Verifique transitividade: as combinações possíveis satisfazem a transitividade.",
+            "Passo 5: Verifique reflexividade: (3, 3) ∉ R, logo não é reflexiva."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_4",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "4. Quantas relações binárias distintas existem sobre um conjunto com n elementos? Quantas delas são reflexivas?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Um conjunto com n elementos possui n² pares ordenados possíveis no produto cartesiano A × A.",
+            "Passo 2: O número total de relações binárias é 2^(n²), pois cada par pode pertencer ou não à relação.",
+            "Passo 3: Para uma relação ser reflexiva, todos os n pares da forma (a, a) devem obrigatoriamente pertencer à relação.",
+            "Passo 4: Os demais n² - n pares podem ou não pertencer. Portanto, existem 2^(n² - n) relações reflexivas."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_5",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "5. Um sistema de admissão ordena candidatos pela relação x ⩽ y se a nota de x é menor ou igual à nota de y, com empates possíveis. Essa relação é ordem parcial, ordem total, ou nenhuma das duas?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: A relação é reflexiva (nota(x) ≤ nota(x)) e transitiva (se nota(x) ≤ nota(y) e nota(y) ≤ nota(z), então nota(x) ≤ nota(z)).",
+            "Passo 2: No entanto, ela falha na antissimetria, pois dois candidatos diferentes x ≠ y podem ter a mesma nota (nota(x) = nota(y)), o que implicaria x ⩽ y e y ⩽ x sem que x fosse igual a y.",
+            "Passo 3: Conclusão: Como falha na antissimetria, não é uma ordem parcial nem total (é um pré-ordem ou pré--encomenda / quasi-ordem)."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_6",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "6. Para A = {1, 2, 3, 4, 5}, escreva os pares e a matriz de cada relação: (a) R1 = {(a, b) : |a − b| = 1}; (b) R2 = {(a, b) : a | b}; (c) R3 = {(a, b) : a + b > 6}.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Para R1 = {(a, b) : |a − b| = 1}, os pares são: {(1,2), (2,1), (2,3), (3,2), (3,4), (4,3), (4,5), (5,4)}.",
+            "Passo 2: Para R2 = {(a, b) : a | b}, os pares são: {(1,1), (1,2), (1,3), (1,4), (1,5), (2,2), (2,4), (3,3), (4,4), (5,5)}.",
+            "Passo 3: Para R3 = {(a, b) : a + b > 6}, os pares são todos os pares (a, b) onde a soma é 7, 8, 9 ou 10: {(2,5), (3,4), (3,5), (4,3), (4,4), (4,5), (5,2), (5,3), (5,4), (5,5)}."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_7",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "7. Dado A = {a, b, c, d}, esboce o dígrafo correspondente à matriz M dada.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Interpretar a matriz de adjacência M fornecida, onde M[i,j] = 1 indica uma aresta do vértice i para o vértice j.",
+            "Passo 2: Listar as arestas a partir das linhas da matriz: a→b, a→c, b→c, c→a, c→c, c→d, d→d.",
+            "Passo 3: Esboçar o grafo direcionado desenhando os vértices a, b, c, d e as setas indicadas."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_8",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "8. Para cada relação do Exercício 6, determine se é reflexiva, simétrica, antissimétrica e/ou transitiva, justificando.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: R1 não é reflexiva (|1-1|=0≠1), é simétrica, não é antissimétrica e não é transitiva.",
+            "Passo 2: R2 é reflexiva (a|a), não é simétrica (1|2 mas não 2|1), é antissimétrica e é transitiva.",
+            "Passo 3: R3 não é reflexiva (1+1=2 not >6), é simétrica (a+b>6 ⇔ b+a>6), não é antissimétrica e não é transitiva."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_9",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações de Equivalência",
+        "tipo": "dissertativa",
+        "enunciado": "9. Seja R sobre Z dada por xRy ⇐⇒ x − y é múltiplo de 5. Mostre que é de equivalência e descreva suas classes.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reflexividade: x - x = 0 = 0 × 5, logo xRx.",
+            "Passo 2: Simetria: Se xRy, x - y = 5k. Então y - x = 5(-k), logo yRx.",
+            "Passo 3: Transitividade: Se xRy e yRz, x - y = 5k1 e y - z = 5k2. Somando, x - z = 5(k1 + k2), logo xRz.",
+            "Passo 4: Classes de equivalência: Existem 5 classes distintas correspondentes aos restos da divisão por 5: [0], [1], [2], [3] e [4]."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_10",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "10. Dê um exemplo de relação sobre {1, 2, 3} que seja: (a) reflexiva e simétrica, mas não transitiva; (b) simétrica e transitiva, mas não reflexiva; (c) antissimétrica e transitiva, mas não reflexiva.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: (a) R = {(1,1), (2,2), (3,3), (1,2), (2,1), (2,3), (3,2)}. Falha pois (1,2) e (2,3) estão em R mas (1,3) não está.",
+            "Passo 2: (b) R = {(1,1), (1,2), (2,1), (2,2)}. Não é reflexiva pois (3,3) ∉ R.",
+            "Passo 3: (c) R = {(1,2), (2,3), (1,3)}. É antissimétrica e transitiva, mas não reflexiva por faltar (1,1)."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_11",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "11. Uma relação pode ser simultaneamente simétrica e antissimétrica? Em caso afirmativo, que forma ela tem? Dê um exemplo.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Sim. Se R é simétrica e antissimétrica, então se (a,b) ∈ R, pela simetria (b,a) ∈ R. Pela antissimetria, a = b.",
+            "Passo 2: Conclusão: A relação deve ser um subconjunto da relação de igualdade Δ = {(x,x) | x ∈ A}.",
+            "Passo 3: Exemplo: R = {(1,1), (2,2)} em A = {1, 2, 3}."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_12",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "12. A relação “existe voo direto entre a e b” sobre um conjunto de cidades é transitiva? Justifique com um contraexemplo.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Suponha que haja um voo direto de São Paulo (SP) para Brasília (BSB) e de Brasília (BSB) para Manaus (MAO).",
+            "Passo 2: Pela transitividade, deveria existir um voo direto de São Paulo para Manaus.",
+            "Passo 3: Contudo, muitas rotas exigem conexões. Se não houver voo direto SP-MAO, a relação não é transitiva."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_13",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "13. Se R é transitiva, sua inversa R−1 = {(b, a) : (a, b) ∈ R} também é? Prove ou dê contraexemplo.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Seja R transitiva. Queremos testar se R⁻¹ é transitiva.",
+            "Passo 2: Se (x, y) ∈ R⁻¹ e (y, z) ∈ R⁻¹, então (y, x) ∈ R e (z, y) ∈ R.",
+            "Passo 3: Pela simetria da definição, como R é transitiva, se (z,y) ∈ R e (y,x) ∈ R, então (z,x) ∈ R, o que significa que (x,z) ∈ R⁻¹.",
+            "Passo 4: Portanto, a inversa de uma relação transitiva também é transitiva."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_14",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações de Equivalência",
+        "tipo": "dissertativa",
+        "enunciado": "14. Verifique se xRy ⇐⇒ x · y > 0 sobre Z é de equivalência. Se não, quais propriedades falham?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reflexividade: x·x > 0 é falso para x = 0 (0·0 = 0 não é maior que 0). Logo, falha na reflexividade.",
+            "Passo 2: Simetria: Se x·y > 0, então y·x > 0 (válido).",
+            "Passo 3: Transitividade: Se x=2, y=1, z=-1... Falha na transitividade para números negativos.",
+            "Passo 4: Conclusão: Não é relação de equivalência."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_15",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações de Equivalência",
+        "tipo": "dissertativa",
+        "enunciado": "15. Verifique se (a, b)R(c, d) ⇐⇒ a + d = b + c sobre Z × Z é de equivalência; em caso afirmativo, descreva a classe de (1, 3).",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reescrevendo como a - b = c - d, vemos que se assemelha à construção formal dos números inteiros a partir dos naturais.",
+            "Passo 2: Reflexividade: a + b = b + a, logo (a,b)R(a,b).",
+            "Passo 3: Simetria e Transitividade demonstradas analogamente pela igualdade algébrica.",
+            "Passo 4: A classe de (1, 3) é o conjunto de pares (x, y) tais que 1 + y = 3 + x, ou seja, y - x = 2."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_16",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações de Equivalência",
+        "tipo": "dissertativa",
+        "enunciado": "16. A relação xRy ⇐⇒ x − y ∈ Q sobre R é de equivalência? Justifique.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reflexividade: x - x = 0 ∈ Q, logo xRx.",
+            "Passo 2: Simetria: Se x - y = q ∈ Q, então y - x = -q ∈ Q, logo yRx.",
+            "Passo 3: Transitividade: Se x - y = q1 ∈ Q e y - z = q2 ∈ Q, então x - z = (x - y) + (y - z) = q1 + q2 ∈ Q, logo xRz.",
+            "Passo 4: Conclusão: Sim, é uma relação de equivalência."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_17",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "17. Prove que ⊆ sobre P({a, b, c}) é ordem parcial. E total?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: A inclusão de conjuntos é reflexiva (A ⊆ A), antissimétrica (A ⊆ B e B ⊆ A ⟹ A = B) e transitiva (A ⊆ B e B ⊆ C ⟹ A ⊆ C), logo é ordem parcial.",
+            "Passo 2: Não é total, pois os subconjuntos {a} e {b} são incomparáveis ({a} ⊈ {b} e {b} ⊈ {a})."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_18",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "18. Sobre as strings de {a, b}, a relação “s1 é prefixo de s2” é ordem parcial? Justifique.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reflexividade: Qualquer string é prefixo de si mesma.",
+            "Passo 2: Antissimétrica: Se s1 é prefixo de s2 e s2 é prefixo de s1, as strings devem ser iguais.",
+            "Passo 3: Transitividade: Se s1 é prefixo de s2 e s2 é prefixo de s3, s1 é prefixo de s3.",
+            "Passo 4: Conclusão: Sim, é uma ordem parcial."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_19",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "19. A divisibilidade “|” é ordem total sobre S = {1, 2, 4, 8, 16}? E sobre T = {1, 2, 3, 4, 5}?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Sobre S, quaisquer dois elementos dividem-se mutuamente (1|2|4|8|16), logo S é uma cadeia e a ordem é total.",
+            "Passo 2: Sobre T, os elementos 2 e 3 não se dividem (2 ∤ 3 e 3 ∤ 2), logo T possui elementos incomparáveis e a ordem não é total."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_20",
+        "materia": "Matemática Discreta II",
+        "topico": "Ordens Parciais e Totais",
+        "tipo": "dissertativa",
+        "enunciado": "20. Sobre R², defina (x1, y1)R(x2, y2) ⇐⇒ x1 ≤ x2 e y1 ≤ y2. Prove que é ordem parcial. Os pontos (3, 5) e (5, 3) são comparáveis? A ordem é total?",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Prova-se a reflexividade, antissimetria e transitividade coordenada a coordenada.",
+            "Passo 2: Para os pontos (3, 5) e (5, 3): 3 ≤ 5 mas 5 ≰ 3, logo não são comparáveis.",
+            "Passo 3: Conclusão: A ordem não é total devido à existência de pontos incomparáveis."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_21",
+        "materia": "Matemática Discreta II",
+        "topico": "Diagramas de Hasse",
+        "tipo": "dissertativa",
+        "enunciado": "21. Construa o diagrama de Hasse da divisibilidade sobre {1, 2, 3, 6, 12, 18}.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Determinar as coberturas (arestas do Hasse): 1 cobre 2 e 3; 2 cobre 6; 3 cobre 6 e 18 (erro comum, verificar divisores corretos).",
+            "Passo 2: Nível base 1, conectando a 2 e 3. De 2 vai para 6 e 12. De 3 vai para 6 e 18."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_22",
+        "materia": "Matemática Discreta II",
+        "topico": "Diagramas de Hasse",
+        "tipo": "dissertativa",
+        "enunciado": "22. Construa o diagrama de Hasse de ⊆ sobre P({a, b}).",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Nível 0: ∅.",
+            "Passo 2: Nível 1: {a}, {b}.",
+            "Passo 3: Nível 2: {a, b} conectado a ambos os conjuntos de nível 1."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_23",
+        "materia": "Matemática Discreta II",
+        "topico": "Diagramas de Hasse",
+        "tipo": "dissertativa",
+        "enunciado": "23. No diagrama de Hasse do Exemplo 9.8, identifique todos os pares incomparáveis.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Analisar o exemplo 9.8 do livro texto de referência associado.",
+            "Passo 2: Identificar pares de elementos que não possuem ancestral/descendente comum direto em cadeia."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_24",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações e Ordem Parcial",
+        "tipo": "dissertativa",
+        "enunciado": "24. A função eh_reflexiva apresentada nesta seção testa se (a, a) ∈ R para todo a ∈ A. Explique, em uma frase, o que a função eh_transitiva calcula e por que ela precisa de dois laços aninhados sobre R.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: A função eh_transitiva verifica se para todo trio (a, b) e (b, c) presentes na relação, o par (a, c) também pertence a ela.",
+            "Passo 2: Ela precisa de laços aninhados (ou múltiplos) para percorrer e testar todas as combinações possíveis de pares ordenados (a, b) e (b, c)."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    },
+    {
+        "id": "MD_25",
+        "materia": "Matemática Discreta II",
+        "topico": "Relações de Equivalência",
+        "tipo": "dissertativa",
+        "enunciado": "25. Um banco agrupa clientes pela relação “∼”: x ∼ y se x e y têm a mesma faixa de score de crédito (A, B, C ou D). Mostre que “∼” é uma relação de equivalência e descreva suas classes de equivalência.",
+        "opcoes": [],
+        "resposta_correta": "",
+        "passos": [
+            "Passo 1: Reflexividade: Todo cliente x tem a mesma faixa de score que ele mesmo.",
+            "Passo 2: Simetria: Se x tem a mesma faixa que y, y tem a mesma faixa que x.",
+            "Passo 3: Transitividade: Se x tem a mesma faixa que y, e y tem a mesma faixa que z, então x tem a mesma faixa que z.",
+            "Passo 4: Classes de equivalência: São exatamente 4 partições correspondentes aos grupos de clientes em cada faixa de score: [A], [B], [C] e [D]."
+        ],
+        "data_cadastro": "2026-10-05 21:43"
+    }
+]
