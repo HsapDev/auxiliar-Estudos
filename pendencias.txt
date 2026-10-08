@@ -1,0 +1,58 @@
+================================================================================
+   PENDÊNCIAS E REQUISITOS EXTERNOS DO SISTEMA ("BILAU") - SEM DOCKER
+================================================================================
+
+1. DEPENDÊNCIAS PYTHON
+--------------------------------------------------------------------------------
+[CONCLUÍDO] watchdog                 (Instalado com sucesso no ambiente Python)
+[CONCLUÍDO] sentence-transformers    (Instalado com sucesso no ambiente Python)
+[CONCLUÍDO] psycopg2-binary          (Já presente)
+[CONCLUÍDO] pgvector                 (Já presente)
+[CONCLUÍDO] pypdf                    (Já presente)
+
+Comando de reinstalação caso troque de máquina/ambiente:
+pip install watchdog sentence-transformers psycopg2-binary pgvector pypdf PySide6 python-dotenv
+
+
+2. OLLAMA (MOTOR DE INFERÊNCIA LOCAL - QWEN 2.5 3B)
+--------------------------------------------------------------------------------
+Como não usaremos Docker, o Ollama roda nativo no Windows:
+- Baixar e instalar: https://ollama.com/download/windows
+- Após instalar, abra o PowerShell e baixe o modelo ultraleve de 3B:
+    ollama pull qwen2.5:3b
+- Testar no terminal:
+    ollama run qwen2.5:3b "Diga apenas: Bilau online!"
+- O serviço iniciará automaticamente em segundo plano em: http://localhost:11434
+
+
+3. POSTGRESQL NATIVO NO WINDOWS (SEM DOCKER) + PGVECTOR
+--------------------------------------------------------------------------------
+- Opção 1 (via instalador oficial):
+    Baixe e instale o PostgreSQL 16 para Windows:
+    https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+    Defina a senha do superusuário 'postgres' (ex: postgres).
+
+- Opção 2 (via Windows Package Manager / Terminal):
+    winget install PostgreSQL.PostgreSQL.16
+
+- Extensão 'pgvector' no PostgreSQL do Windows:
+    1. Baixe o release pré-compilado para Windows do pgvector:
+       https://github.com/pgvector/pgvector/releases
+    2. Copie:
+       - 'vector.dll' para a pasta 'lib' do PostgreSQL (ex: C:\Program Files\PostgreSQL\16\lib)
+       - 'vector.control' e 'vector--*.sql' para 'share\extension' (ex: C:\Program Files\PostgreSQL\16\share\extension)
+    3. Crie o banco de dados do projeto:
+       CREATE DATABASE bilau_estudos;
+
+
+4. ARQUIVO DE CONFIGURAÇÃO (.env)
+--------------------------------------------------------------------------------
+Copie ou atualize o arquivo .env com os dados de conexão do seu PostgreSQL local:
+PG_HOST=localhost
+PG_PORT=5432
+PG_USER=postgres
+PG_PASSWORD=postgres
+PG_DB=bilau_estudos
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:3b
+================================================================================

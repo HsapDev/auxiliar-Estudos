@@ -9,6 +9,7 @@ from logger import log_info, log_sucesso, log_aviso, log_erro
 from ui.theme import aplicar_estilo_app
 
 # Importa as abas criadas
+from ui.tab_bilau_terminal import TabBilauTerminal
 from ui.tab_home import TabHome
 from ui.tab_arena import TabArena
 from ui.tab_guru import TabGuru
@@ -16,16 +17,30 @@ from ui.tab_fabriqueiro import TabFabriqueiro
 from ui.tab_config import TabConfig
 from ui.tab_logs import TabLogs
 
+import database
+from windows_safety import bloquear_desligamento_so, liberar_desligamento_so
+from watcher import IngestaoWatcherHandler, Observer
+from pathlib import Path
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("🎓 Auxiliar de Estudos & Simulados")
+        self.setWindowTitle("🎓 Auxiliar de Estudos & Simulados (Bilau)")
         self.resize(1120, 780)
         self.setMinimumSize(960, 680)
         log_info("Inicializando interface gráfica principal...", "App")
 
+        self.indexando_ativo = False
+
+        # Inicializa banco de dados se disponível
+        try:
+            database.inicializar_banco()
+        except Exception as e:
+            log_aviso(f"Banco de dados não conectado na inicialização: {e}", "App")
+
         # Configura as Abas Principais
         self.tabs = QTabWidget()
+        self.tab_bilau = TabBilauTerminal()
         self.tab_home = TabHome()
         self.tab_arena = TabArena()
         self.tab_guru = TabGuru()
@@ -33,6 +48,7 @@ class MainWindow(QMainWindow):
         self.tab_config = TabConfig()
         self.tab_logs = TabLogs()
 
+        self.tabs.addTab(self.tab_bilau, "⚡ Campo Bilau (Terminal)")
         self.tabs.addTab(self.tab_home, "Fila de Estudos")
         self.tabs.addTab(self.tab_arena, "⚔️ Arena (Simulados)")
         self.tabs.addTab(self.tab_guru, "🧙‍♂️ Guru de Estudos")
@@ -41,6 +57,9 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab_logs, "📋 Central de Logs")
 
         self.setCentralWidget(self.tabs)
+
+        # Inicia Watcher em segundo plano
+        self._iniciar_watcher_background()
 
         # Configura o Tray Icon
         self._configurar_tray_icon()
@@ -74,8 +93,44 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
+    def _iniciar_watcher_background(self):
+        """Inicia o watchdog monitorando a pasta data/entrada em thread background."""
+        try:
+            pasta_in = Path("data/entrada")
+            pasta_proc = Path("data/processados")
+            pasta_in.mkdir(parents=True, exist_ok=True)
+            pasta_proc.mkdir(parents=True, exist_ok=True)
+
+            handler = IngestaoWatcherHandler(
+                pasta_in,
+                pasta_proc,
+                callback_iniciar=self._ao_iniciar_indexacao,
+                callback_concluir=self._ao_concluir_indexacao
+            )
+            self.observer = Observer()
+            self.observer.schedule(handler, str(pasta_in), recursive=False)
+            self.observer.start()
+            log_sucesso("Watcher de arquivos ativado na pasta 'data/entrada'.", "App")
+        except Exception as e:
+            log_aviso(f"Não foi possível inicializar o Watcher: {e}", "App")
+            self.observer = None
+
+    def _ao_iniciar_indexacao(self):
+        """Ativa trava de segurança do Windows API durante vetorização."""
+        self.indexando_ativo = True
+        bloquear_desligamento_so(int(self.winId()), "Indexando e vetorizando novos arquivos no Auxiliar de Estudos...")
+
+    def _ao_concluir_indexacao(self):
+        """Libera trava do Windows após conclusão do processamento."""
+        self.indexando_ativo = False
+        liberar_desligamento_so(int(self.winId()))
+
     def _sair_aplicacao(self):
         log_info("Encerrando aplicação definitivamente a pedido do usuário...", "App")
+        if hasattr(self, "observer") and self.observer:
+            self.observer.stop()
+            self.observer.join(timeout=2)
+        liberar_desligamento_so(int(self.winId()))
         QApplication.instance().quit()
 
     def enviar_notificacao_diaria(self):
@@ -89,9 +144,22 @@ class MainWindow(QMainWindow):
         )
 
     def closeEvent(self, event):
-        """Minimiza para o Tray Icon ao clicar no 'X' em vez de fechar o app."""
+        """Trava de segurança: avisa se houver indexação e minimiza para bandeja."""
+        if self.indexando_ativo:
+            from PyQt6.QtWidgets import QMessageBox
+            resp = QMessageBox.question(
+                self,
+                "Processamento em Andamento",
+                "Arquivos ainda estão sendo vetorizados na esteira. O app continuará em segundo plano na bandeja do sistema para não corromper os dados. Deseja minimizar agora?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            if resp == QMessageBox.StandardButton.No:
+                event.ignore()
+                return
+
         if self.tray_icon.isVisible():
-            log_info("Janela fechada pelo usuário: minimizando para a bandeja do sistema (Tray).", "App")
+            log_info("Janela minimizada para a bandeja do sistema (Tray).", "App")
             self.hide()
             self.enviar_notificacao_diaria()
             event.ignore()
